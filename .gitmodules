@@ -1,0 +1,3 @@
+[submodule "libs/gtl"]
+	path = libs/gtl
+	url = https://github.com/JojOatXGME/gtl.git

@@ -15,6 +15,9 @@ find_package(GLEW REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_search_module(GLFW REQUIRED glfw3)
 
+## Add submodules
+add_subdirectory("libs/gtl")
+
 ## Create some variables to use them below
 set(SOURCE_DIR "src")
 set(INCLUDE_DIR "include")
@@ -47,6 +50,9 @@ target_include_directories("${EXECUTABLE}" PRIVATE ${GLFW_INCLUDE_DIRS})
 target_link_libraries("${EXECUTABLE}" ${OPENGL_LIBRARIES})
 target_link_libraries("${EXECUTABLE}" ${GLEW_LIBRARIES})
 target_link_libraries("${EXECUTABLE}" ${GLFW_LIBRARIES})
+
+## Link with submodules
+target_link_libraries("${EXECUTABLE}" "gtl")
 
 ## Use C++11
 set_target_properties("${EXECUTABLE}" PROPERTIES LINKER_LANGUAGE CXX)
