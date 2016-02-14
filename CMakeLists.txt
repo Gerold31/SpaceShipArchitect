@@ -2,14 +2,16 @@ cmake_minimum_required(VERSION 3.1)
 project( SpaceShipArchitect )
 
 set(EXECUTABLE "SSA")
-set(VERSION_MAJOR 0)
-set(VERSION_MINOR 1)
+set(VERSION_MAJOR 0 CACHE STRING "Project major version number.")
+set(VERSION_MINOR 1 CACHE STRING "Project minor version number.")
+mark_as_advanced(VERSION_MAJOR VERSION_MINOR)
 
 # Change default build type to 'Debug'
-set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build type")
+set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build type" FORCE)
 
 ## Load packages for cmake
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
+find_package(Doxygen)
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(PkgConfig REQUIRED)
@@ -63,6 +65,25 @@ configure_file(
 	"${PROJECT_SOURCE_DIR}/config.h.in"
 	"${PROJECT_BINARY_DIR}/config.h" ESCAPE_QUOTES)
 include_directories("${PROJECT_BINARY_DIR}")
+
+## Add rule for Doxygen
+option(DOC_TARGET
+	"Add a target to create the HTML based documentation (requires Doxygen)"
+	${DOXYGEN_FOUND})
+
+if (DOC_TARGET)
+	if (NOT DOXYGEN_FOUND)
+		message(FATAL_ERROR "Doxygen not found")
+	endif()
+
+	configure_file(
+		"${PROJECT_SOURCE_DIR}/Doxyfile.in"
+		"${PROJECT_BINARY_DIR}/Doxyfile" ESCAPE_QUOTES @ONLY)
+	add_custom_target(doc
+		"${DOXYGEN_EXECUTABLE}" "${PROJECT_BINARY_DIR}/Doxyfile"
+		WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
+		COMMENT "Generating API documentation with Doxygen" VERBATIM)
+endif()
 
 ## Specify install rules
 install(TARGETS "${EXECUTABLE}"
