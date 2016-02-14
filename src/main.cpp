@@ -9,7 +9,11 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include <gtl/ogl/program.h>
+
+#include "config.h"
 #include "defines.h"
+#include "resourceloader.h"
 #include "utils.h"
 
 using std::cerr;
@@ -18,28 +22,6 @@ using std::endl;
 
 #define POS_ATTRIB      0
 #define COLOR_ATTRIB    1
-
-const char vertexShader[] = "#version 150\n"
-		"in vec3 vertPos;\n"
-		"in vec3 vertColor;\n"
-		"out vec3 fragColor;\n"
-
-		"uniform mat4 model;\n"
-		"uniform mat4 view;\n"
-		"uniform mat4 proj;\n"
-
-		"void main() {\n"
-		"	fragColor = vertColor;\n"
-		"	gl_Position = proj * view * model * vec4(vertPos, 1.0);\n"
-		"}\n";
-
-const char fragmentShader[] = "#version 150\n"
-		"in vec3 fragColor;\n"
-		"out vec4 pixelColor;\n"
-		"\n"
-		"void main() {\n"
-		"	pixelColor = vec4(fragColor, 1.0); // RGBA\n"
-		"}\n";
 
 static GLfloat vertices[] = {
 	// vertex pos       | vertex color
@@ -57,7 +39,7 @@ int main(int argc, char *argv[])
 	}
 	// set some options for glfw
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
@@ -83,27 +65,11 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
+	// create resource loader
+	ResourceLoader resources(RESOURCE_DIR);
+
 	// initialize shaders
-	GLuint program;
-	try {
-		// create shader objects
-		GLuint vert = createShader(vertexShader, "Vertex Shader", GL_VERTEX_SHADER);
-		GLuint frag = createShader(fragmentShader, "Fragment Shader", GL_FRAGMENT_SHADER);
-		// create program object and attach shaders
-		program = createProgram({vert, frag});
-		glDeleteShader(vert); glDeleteShader(frag); // we do not need them anymore
-		// pre-link specifications
-		glBindAttribLocation(program, POS_ATTRIB, "vertPos");
-		glBindAttribLocation(program, COLOR_ATTRIB, "vertColor");
-		glBindFragDataLocation(program, 0, "pixelColor");
-		// link program object
-		linkProgram(program);
-		validateProgram(program);
-	} catch (...) {
-		// TODO cleanup shader and program objects
-		glfwTerminate();
-		return EXIT_FAILURE;
-	}
+	gtl::ogl::Program program = resources.loadShaderProgram("shader/example.prog");
 
 	// initialize vertex buffer object
 	GLuint vbo;
@@ -125,8 +91,8 @@ int main(int argc, char *argv[])
 				6 * sizeof(GLfloat), reinterpret_cast<void*>(3 * sizeof(GLfloat)));
 
 	// get uniform locations
-	GLint modelUniLoc = glGetUniformLocation(program, "model");
-	GLint viewUniLoc = glGetUniformLocation(program, "view");
+	GLint modelUniLoc = program.getUniformLocation("model");
+	GLint viewUniLoc = program.getUniformLocation("view");
 
 	// transformations
 	glm::mat4 model;
@@ -139,11 +105,9 @@ int main(int argc, char *argv[])
 	glfwGetCursorPos(window, &cursorX, &cursorY);
 
 	// set projection matrix
-	glUseProgram(program);
 	float aspect = static_cast<float>(WINDOW_WIDTH) / WINDOW_HEIGHT;
 	glm::mat4 proj = glm::perspective(0.8f, aspect, 0.1f, 1000.0f);
-	glUniformMatrix4fv(glGetUniformLocation(program, "proj"),
-				1, GL_FALSE, glm::value_ptr(proj));
+	program.setUniform(program.getUniformLocation("proj"), proj);
 
 	// repeat this loop until the user closes the window
 	while (!glfwWindowShouldClose(window))
@@ -152,7 +116,7 @@ int main(int argc, char *argv[])
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		// render something with OpenGL
-		glUseProgram(program); // select shaders
+		program.use(); // select shaders
 		glBindVertexArray(vao);
 		glUniformMatrix4fv(modelUniLoc, 1, GL_FALSE, glm::value_ptr(model));
 		glUniformMatrix4fv(viewUniLoc, 1, GL_FALSE, glm::value_ptr(view));
@@ -218,7 +182,6 @@ int main(int argc, char *argv[])
 	// free resources from OpenGL
 	glDeleteVertexArrays(1, &vao);
 	glDeleteBuffers(1, &vbo);
-	glDeleteProgram(program);
 	// exit program
 	glfwTerminate();
 	return EXIT_SUCCESS;
