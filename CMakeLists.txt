@@ -1,6 +1,13 @@
 cmake_minimum_required(VERSION 3.1)
 project( SpaceShipArchitect )
 
+set(EXECUTABLE "SSA")
+set(VERSION_MAJOR 0)
+set(VERSION_MINOR 1)
+
+# Change default build type to 'Debug'
+set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build type")
+
 ## Load packages for cmake
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 find_package(OpenGL REQUIRED)
@@ -9,45 +16,50 @@ find_package(PkgConfig REQUIRED)
 pkg_search_module(GLFW REQUIRED glfw3)
 
 ## Create some variables to use them below
-set(INCLUDE_DIR "include/")
-set(SOURCE_DIR "src/")
+set(SOURCE_DIR "src")
+set(INCLUDE_DIR "include")
+set(RESOURCE_DIR "resources")
 file(GLOB_RECURSE SOURCE_FILES
-	"src/*.cpp")
+	"${SOURCE_DIR}/*.cpp")
 file(GLOB_RECURSE HEADER_FILES
-	"include/*.h" "include/*.hpp")
-#file(GLOB_RECURSE SHADER_FILES
-#	"shader/*.glsl" "shader/*.vert" "shader/*.frag" "shader/*.geom"
-#	"shader/*.tcs" "shader/*.tes")
+	"${INCLUDE_DIR}/*.h" "${INCLUDE_DIR}/*.hpp")
+file(GLOB_RECURSE RESOURCE_FILES
+	"${RESOURCE_DIR}/*")
 
-## Show shaders in IDE
-#add_custom_target(Shader ALL SOURCES ${SHADER_FILES})
+## Show resources in IDE
+add_custom_target(Resources ALL SOURCES ${RESOURCE_FILES})
 
 ## Create source groups (for Visual Studio)
 source_group("Headers" FILES ${HEADER_FILES})
 source_group("Sources" FILES ${SOURCE_FILES})
-#source_group("Shaders" FILES ${SHADER_FILES})
-
-## Copy shaders to build dir
-#if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
-#	foreach(item IN LISTS SHADER_FILES)
-#		configure_file("${item}" "${item}" COPYONLY)
-#	endforeach()
-#endif()
+source_group("Resources" FILES ${RESOURCE_FILES})
 
 ## Add executable
-add_executable("${PROJECT_NAME}" ${SOURCE_FILES} ${HEADER_FILES} ${SHADER})
-target_include_directories("${PROJECT_NAME}" PUBLIC "${INCLUDE_DIR}")
+add_executable("${EXECUTABLE}" ${SOURCE_FILES} ${HEADER_FILES})
+target_include_directories("${EXECUTABLE}" PUBLIC "${INCLUDE_DIR}/")
 
 ## Add include directories of libraries
-target_include_directories("${PROJECT_NAME}" PRIVATE ${OpenGL_INCLUDE_DIRS})
-target_include_directories("${PROJECT_NAME}" PRIVATE ${GLEW_INCLUDE_DIRS})
-target_include_directories("${PROJECT_NAME}" PRIVATE ${GLFW_INCLUDE_DIRS})
+target_include_directories("${EXECUTABLE}" PRIVATE ${OpenGL_INCLUDE_DIRS})
+target_include_directories("${EXECUTABLE}" PRIVATE ${GLEW_INCLUDE_DIRS})
+target_include_directories("${EXECUTABLE}" PRIVATE ${GLFW_INCLUDE_DIRS})
 
 ## Link with libraries
-target_link_libraries("${PROJECT_NAME}" ${OPENGL_LIBRARIES})
-target_link_libraries("${PROJECT_NAME}" ${GLEW_LIBRARIES})
-target_link_libraries("${PROJECT_NAME}" ${GLFW_LIBRARIES})
+target_link_libraries("${EXECUTABLE}" ${OPENGL_LIBRARIES})
+target_link_libraries("${EXECUTABLE}" ${GLEW_LIBRARIES})
+target_link_libraries("${EXECUTABLE}" ${GLFW_LIBRARIES})
 
 ## Use C++11
-set_target_properties("${PROJECT_NAME}" PROPERTIES LINKER_LANGUAGE CXX)
-set_target_properties("${PROJECT_NAME}" PROPERTIES CXX_STANDARD 11)
+set_target_properties("${EXECUTABLE}" PROPERTIES LINKER_LANGUAGE CXX)
+set_target_properties("${EXECUTABLE}" PROPERTIES CXX_STANDARD 11)
+
+## Create header with build information
+configure_file(
+	"${PROJECT_SOURCE_DIR}/config.h.in"
+	"${PROJECT_BINARY_DIR}/config.h" ESCAPE_QUOTES)
+include_directories("${PROJECT_BINARY_DIR}")
+
+## Specify install rules
+install(TARGETS "${EXECUTABLE}"
+	DESTINATION "bin")
+install(DIRECTORY "${RESOURCE_DIR}/"
+	DESTINATION "res")
