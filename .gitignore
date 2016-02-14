@@ -26,3 +26,18 @@
 *.exe
 *.out
 *.app
+
+# CMake Results
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# Files created by editors
+*.user
+*~
+.*.swp
+
+# Operating system files
+Thumbs.db
+.DS_Store
