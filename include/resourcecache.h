@@ -25,9 +25,10 @@ public:
 
 		auto it = mMap.find(name);
 		if (it == mMap.end() || (result = it->second.lock()) == nullptr) {
-			result = std::shared_ptr<T>(new T((mLoader->*Func)(name)), [this,name](T*){
+			result = std::shared_ptr<T>(new T((mLoader->*Func)(name)), [this,name](T* o){
 				std::lock_guard<std::mutex> lock(mMutex);
 				mMap.erase(name);
+				delete o;
 			});
 			mMap[name] = result;
 		}

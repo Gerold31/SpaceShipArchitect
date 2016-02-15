@@ -19,6 +19,7 @@ pkg_search_module(GLFW REQUIRED glfw3)
 
 ## Add submodules
 add_subdirectory("libs/gtl")
+add_subdirectory("libs/SOIL")
 
 ## Create some variables to use them below
 set(SOURCE_DIR "src")
@@ -55,6 +56,7 @@ target_link_libraries("${EXECUTABLE}" ${GLFW_LIBRARIES})
 
 ## Link with submodules
 target_link_libraries("${EXECUTABLE}" "gtl")
+target_link_libraries("${EXECUTABLE}" "SOIL")
 
 ## Use C++11
 set_target_properties("${EXECUTABLE}" PROPERTIES LINKER_LANGUAGE CXX)

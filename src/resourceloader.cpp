@@ -1,5 +1,6 @@
 #include "resourceloader.h"
 
+#include <cassert>
 #include <fstream>
 #include <istream>
 #include <memory>
@@ -14,6 +15,8 @@
 #include <gtl/ogl/shader.h>
 #include <gtl/ogl/shaderexception.h>
 #include <gtl/ogl/texture.h>
+
+#include <SOIL.h>
 
 #include "utils.h"
 
@@ -45,7 +48,7 @@ ResourceLoader::~ResourceLoader()
 }
 
 /**
- * @brief ResourceLoader::exists checks whether a resource exists.
+ * @brief Checks whether a resource exists.
  *
  * @param name The name of the resource.
  * @return <code>true</code> if the resource exists, <code>false</code> otherwise.
@@ -57,7 +60,7 @@ bool ResourceLoader::exists(const string &name) const
 }
 
 /**
- * @brief ResourceLoader::open gets an imput stream of a resource.
+ * @brief Gets an imput stream of a resource.
  *
  * This function opens a resource and renturns it's input stream. The badbid of
  * the exception mask is set. Use ResourceLoader::load to get the content of the
@@ -84,8 +87,9 @@ unique_ptr<istream> ResourceLoader::open(const string &name) const
 }
 
 /**
- * @brief ResourceLoader::load reads a resource and returnes the content.
+ * @brief Reads a resource and returnes the content.
  *
+ * @see ResourceLoader::open
  * @param name The name of the resource.
  * @return The content of the resource.
  * @throws ResourceNotFoundException If the resource does not exist or could not be opened.
@@ -99,9 +103,60 @@ string ResourceLoader::load(const string &name) const
 	return buffer.str();
 }
 
-gtl::ogl::Texture ResourceLoader::loadTexture(const std::__cxx11::string &name) const
+Texture ResourceLoader::loadTexture(const string &name) const
 {
-	// TODO
+	string data = load(name);
+
+	int width, height, channels;
+	auto img = SOIL_load_image_from_memory(
+			reinterpret_cast<const unsigned char*>(data.data()), data.size(),
+			&width, &height, &channels,
+			SOIL_LOAD_AUTO);
+
+	std::cerr << "Channels: " << channels << ", Width: " << width << ", Height: " << height << std::endl;
+
+	if (img == nullptr) {
+		// TODO invalid image: throw exception?
+	} else {
+		Texture t(Texture::Target::T_2D);
+
+		GLenum format;
+		GLenum internalFormat;
+		switch (channels) {
+		case 1:
+			format = GL_RED;
+			internalFormat = GL_R8;
+		{
+			GLint swizzleMask[] = {GL_RED, GL_RED, GL_RED, GL_ONE};
+			t.setParameter(GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
+		}
+			break;
+		case 2:
+			format = GL_RG;
+			internalFormat = GL_RG8;
+		{
+			GLint swizzleMask[] = {GL_RED, GL_RED, GL_RED, GL_GREEN};
+			t.setParameter(GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
+		}
+			break;
+		case 3:
+			format = GL_RGB;
+			internalFormat = GL_RGB8;
+			break;
+		case 4:
+			format = GL_RGBA;
+			internalFormat = GL_RGBA8;
+			break;
+		default:
+			assert(false);
+		}
+
+		t.storage(1, internalFormat, width, height);
+		t.setSubImage(0, 0, 0, width, height, format, GL_UNSIGNED_BYTE, img);
+
+		SOIL_free_image_data(img);
+		return t;
+	}
 }
 
 shared_ptr<const Texture> ResourceLoader::getTexture(const string &name)

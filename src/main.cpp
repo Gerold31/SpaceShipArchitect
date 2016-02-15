@@ -10,6 +10,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <gtl/ogl/program.h>
+#include <gtl/ogl/texture.h>
 
 #include "config.h"
 #include "defines.h"
@@ -22,12 +23,13 @@ using std::endl;
 
 #define POS_ATTRIB      0
 #define COLOR_ATTRIB    1
+#define TEXCORD_ATTRIB    2
 
 static GLfloat vertices[] = {
-	// vertex pos       | vertex color
-	 0.0f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,
-	-0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,
-	 0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f
+	// vertex pos       | vertex color      | tex cord
+	 0.0f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   0.5f, 0.0f,
+	-0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   0.0f, 1.0f,
+	 0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   1.0f, 1.0f
 };
 
 int main(int argc, char *argv[])
@@ -71,6 +73,9 @@ int main(int argc, char *argv[])
 	// initialize shaders
 	gtl::ogl::Program program = resources.loadShaderProgram("shader/example.prog");
 
+	// load textures
+	gtl::ogl::Texture texture = resources.loadTexture("texture/test_rect.png");
+
 	// initialize vertex buffer object
 	GLuint vbo;
 	glGenBuffers(1, &vbo);
@@ -85,10 +90,13 @@ int main(int argc, char *argv[])
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glEnableVertexAttribArray(POS_ATTRIB);
 	glVertexAttribPointer(POS_ATTRIB, 3, GL_FLOAT, GL_FALSE,
-				6 * sizeof(GLfloat), 0);
+				8 * sizeof(GLfloat), 0);
 	glEnableVertexAttribArray(COLOR_ATTRIB);
 	glVertexAttribPointer(COLOR_ATTRIB, 3, GL_FLOAT, GL_FALSE,
-				6 * sizeof(GLfloat), reinterpret_cast<void*>(3 * sizeof(GLfloat)));
+				8 * sizeof(GLfloat), reinterpret_cast<void*>(3 * sizeof(GLfloat)));
+	glEnableVertexAttribArray(TEXCORD_ATTRIB);
+	glVertexAttribPointer(TEXCORD_ATTRIB, 2, GL_FLOAT, GL_FALSE,
+				8 * sizeof(GLfloat), reinterpret_cast<void*>(6 * sizeof(GLfloat)));
 
 	// get uniform locations
 	GLint modelUniLoc = program.getUniformLocation("model");
@@ -109,6 +117,9 @@ int main(int argc, char *argv[])
 	glm::mat4 proj = glm::perspective(0.8f, aspect, 0.1f, 1000.0f);
 	program.setUniform(program.getUniformLocation("proj"), proj);
 
+	// set bindings for samplers
+	program.setUniform(program.getUniformLocation("tex"), 1);
+
 	// repeat this loop until the user closes the window
 	while (!glfwWindowShouldClose(window))
 	{
@@ -117,6 +128,7 @@ int main(int argc, char *argv[])
 
 		// render something with OpenGL
 		program.use(); // select shaders
+		texture.bind(1);
 		glBindVertexArray(vao);
 		glUniformMatrix4fv(modelUniLoc, 1, GL_FALSE, glm::value_ptr(model));
 		glUniformMatrix4fv(viewUniLoc, 1, GL_FALSE, glm::value_ptr(view));
