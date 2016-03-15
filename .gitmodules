@@ -1,3 +1,6 @@
 [submodule "libs/gtl"]
 	path = libs/gtl
 	url = https://github.com/JojOatXGME/gtl.git
+[submodule "libs/utl"]
+	path = libs/utl
+	url = https://github.com/JojOatXGME/utl.git

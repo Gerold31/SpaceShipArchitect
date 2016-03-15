@@ -1,5 +1,4 @@
 #include <cstdlib>
-#include <iostream>
 
 #include <GL/glew.h>
 
@@ -12,13 +11,18 @@
 #include <gtl/ogl/program.h>
 #include <gtl/ogl/texture.h>
 
+#define UTL_LOGGER main
+#include <utl/consoleloghandler.h>
+#include <utl/logger.h>
+#include <utl/logging.h>
+
 #include "config.h"
 #include "defines.h"
 #include "resourceloader.h"
 #include "utils.h"
 
-using std::cerr;
-using std::endl;
+using utl::ConsoleLogHandler;
+using utl::Logger;
 
 
 #define POS_ATTRIB      0
@@ -34,9 +38,12 @@ static GLfloat vertices[] = {
 
 int main(int argc, char *argv[])
 {
+	// Initialize loggers
+	Logger::getRoot().addHandler(std::make_shared<ConsoleLogHandler>());
+
 	// initialize GLFW
 	if (!glfwInit()) {
-		cerr << "Could not initialize GLFW." << endl;
+		utl::severe("Could not initialize GLFW.");
 		return EXIT_FAILURE;
 	}
 	// set some options for glfw
@@ -50,7 +57,7 @@ int main(int argc, char *argv[])
 				WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE,
 				WINDOW_FULLSCREEN ? glfwGetPrimaryMonitor() : nullptr, nullptr);
 	if (window == nullptr) {
-		cerr << "Could not create window." << endl;
+		utl::severe("Could not create window.");
 		glfwTerminate();
 		return EXIT_FAILURE;
 	}
@@ -61,12 +68,12 @@ int main(int argc, char *argv[])
 	glewExperimental = GL_TRUE;
 	GLenum ret = glewInit();
 	if (ret != GLEW_OK) {
-		cerr << "Could not initialize GLEW: "
-			 << glewGetErrorString(ret) << endl;
+		utl::severe("Could not initialize GLEW: %s", glewGetErrorString(ret));
 		glfwTerminate(); // cleanup GLFW
 		return EXIT_FAILURE;
 	}
 
+	utl::info("Load and initialize resources ...");
 	// create resource loader
 	ResourceLoader resources(RESOURCE_DIR);
 
@@ -120,6 +127,7 @@ int main(int argc, char *argv[])
 	// set bindings for samplers
 	program.setUniform(program.getUniformLocation("tex"), 1);
 
+	utl::info("Setup complete.");
 	// repeat this loop until the user closes the window
 	while (!glfwWindowShouldClose(window))
 	{
@@ -191,6 +199,7 @@ int main(int argc, char *argv[])
 		glfwSwapBuffers(window);
 	}
 
+	utl::info("Clean up resources ...");
 	// free resources from OpenGL
 	glDeleteVertexArrays(1, &vao);
 	glDeleteBuffers(1, &vbo);
