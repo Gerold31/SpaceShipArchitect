@@ -20,6 +20,12 @@ public:
 	ResourceNotFoundException(const std::string &file, const std::string &msg = std::string());
 };
 
+class InvalidResourceException : public std::runtime_error
+{
+public:
+	InvalidResourceException(const std::string &file, const std::string &msg = std::string());
+};
+
 class ResourceLoader
 {
 public:

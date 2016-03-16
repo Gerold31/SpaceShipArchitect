@@ -113,10 +113,8 @@ Texture ResourceLoader::loadTexture(const string &name) const
 			&width, &height, &channels,
 			SOIL_LOAD_AUTO);
 
-	std::cerr << "Channels: " << channels << ", Width: " << width << ", Height: " << height << std::endl;
-
 	if (img == nullptr) {
-		// TODO invalid image: throw exception?
+		throw InvalidResourceException(name, SOIL_last_result());
 	} else {
 		Texture t(Texture::Target::T_2D);
 
@@ -238,8 +236,7 @@ Program ResourceLoader::loadShaderProgram(const string &name) const
 			try {
 				p.attachShader(loadShader(line));
 			} catch (ResourceNotFoundException &e) {
-				// TODO catch not found for better error messages
-				throw;
+				throw InvalidResourceException(name, string("Missing shader: ") + e.what());
 			}
 		}
 	}
@@ -268,6 +265,11 @@ shared_ptr<const Program> ResourceLoader::getShaderProgram(const string &name)
 }
 
 ResourceNotFoundException::ResourceNotFoundException(const string &file, const string &msg) :
+	runtime_error(msg.empty() ? file : file + " (" + msg + ")")
+{
+}
+
+InvalidResourceException::InvalidResourceException(const string &file, const string &msg) :
 	runtime_error(msg.empty() ? file : file + " (" + msg + ")")
 {
 }
