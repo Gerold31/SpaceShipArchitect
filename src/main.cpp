@@ -12,8 +12,7 @@
 #include <gtl/ogl/texture.h>
 
 #define UTL_LOGGER main
-#include <utl/consoleloghandler.h>
-#include <utl/logger.h>
+#include <utl/log/consoleloghandler.h>
 #include <utl/logging.h>
 
 #include "config.h"
@@ -21,8 +20,8 @@
 #include "resourceloader.h"
 #include "utils.h"
 
-using utl::ConsoleLogHandler;
-using utl::Logger;
+using utl::log::ConsoleLogHandler;
+using utl::log::Logger;
 
 
 #define POS_ATTRIB      0
