@@ -1,7 +1,6 @@
 #include <cstdlib>
 
 #include <GL/glew.h>
-
 #include <GLFW/glfw3.h>
 
 #include <glm/glm.hpp>
@@ -17,6 +16,7 @@
 
 #include "config.h"
 #include "defines.h"
+#include "gltools.h"
 #include "resourceloader.h"
 #include "utils.h"
 
@@ -26,7 +26,7 @@ using utl::log::Logger;
 
 #define POS_ATTRIB      0
 #define COLOR_ATTRIB    1
-#define TEXCORD_ATTRIB    2
+#define TEXCORD_ATTRIB  2
 
 static GLfloat vertices[] = {
 	// vertex pos       | vertex color      | tex cord
@@ -71,6 +71,19 @@ int main(int argc, char *argv[])
 		glfwTerminate(); // cleanup GLFW
 		return EXIT_FAILURE;
 	}
+
+	// check and initialize OpenGL context
+	GLTools::checkExtension(GLTools::GL_KHR_DEBUG, false);
+	GLTools::checkExtension(GLTools::GL_ARB_DEBUG_OUTPUT, false);
+	GLTools::checkExtension("GL_ARB_direct_state_access", true);
+	GLTools::checkExtension("GL_ARB_separate_shader_objects", true);
+
+	if (GLTools::isExtensionMissing()) {
+		utl::severe("Required OpenGL extensions are missing.");
+		glfwTerminate(); // cleanup GLFW
+		return EXIT_FAILURE;
+	}
+	GLTools::registerErrorHandler();
 
 	utl::info("Load and initialize resources ...");
 	// create resource loader
