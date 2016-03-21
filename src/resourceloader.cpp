@@ -73,7 +73,7 @@ bool ResourceLoader::exists(const string &name) const
  */
 unique_ptr<istream> ResourceLoader::open(const string &name) const
 {
-	unique_ptr<ifstream> f(new ifstream(mSearchpath + "/" + name));
+	unique_ptr<ifstream> f(new ifstream(mSearchpath + "/" + name, std::ios::binary));
 	errno = 0;
 	if (f->good()) {
 		f->exceptions(ifstream::badbit);
