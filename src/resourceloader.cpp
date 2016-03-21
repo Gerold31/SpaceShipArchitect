@@ -165,6 +165,7 @@ shared_ptr<const Texture> ResourceLoader::getTexture(const string &name)
 Texture ResourceLoader::loadArrayTexture(const string names[], size_t len) const
 {
 	// TODO
+	return Texture();
 }
 
 shared_ptr<const Texture> ResourceLoader::getArrayTexture(const string names[], size_t len)

@@ -5,6 +5,11 @@
 #include <unordered_set>
 
 #include <GL/glew.h>
+#ifdef _WIN32
+#  include <windows.h>
+#else
+#  define APIENTRY
+#endif
 
 
 class GLTools
@@ -21,7 +26,7 @@ public:
 
 	static void registerErrorHandler();
 
-	static void errorHandler(GLenum source, GLenum type, GLuint id,
+	static void APIENTRY errorHandler(GLenum source, GLenum type, GLuint id,
 				GLenum severity, GLsizei length, const GLchar *message,
 				const GLvoid *userParam);
 
