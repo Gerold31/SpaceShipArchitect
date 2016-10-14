@@ -1,31 +1,36 @@
 cmake_minimum_required(VERSION 3.1)
 project( SpaceShipArchitect )
 
-set(EXECUTABLE "SSA")
-set(VERSION_MAJOR 0 CACHE STRING "Project major version number.")
-set(VERSION_MINOR 1 CACHE STRING "Project minor version number.")
+set(EXECUTABLE "SSA" CACHE STRING "Name of the resulting executable.")
+set(VERSION_MAJOR 0  CACHE STRING "Project major version number.")
+set(VERSION_MINOR 1  CACHE STRING "Project minor version number.")
 mark_as_advanced(VERSION_MAJOR VERSION_MINOR)
 
-# Change default build type to 'Debug'
-set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build type" FORCE)
+## Change default build type to 'Debug'
+if (NOT CMAKE_BUILD_TYPE)
+	set(
+		CMAKE_BUILD_TYPE "Debug" CACHE STRING
+		"Build type, options: None, Debug, Release, RelWithDebInfo, MinSizeRel."
+		FORCE
+	)
+endif()
 
 ## Load packages for cmake
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 find_package(Doxygen)
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
-find_package(PkgConfig REQUIRED)
-pkg_search_module(GLFW REQUIRED glfw3)
+find_package(glm REQUIRED)
+find_package(glfw3 REQUIRED)
 
-## Add submodules
-add_subdirectory("libs/gtl")
-add_subdirectory("libs/SOIL")
-add_subdirectory("libs/utl")
+## Add libraries distributed with the repository
+add_subdirectory("libs")
 
 ## Create some variables to use them below
 set(SOURCE_DIR "src")
 set(INCLUDE_DIR "include")
 set(RESOURCE_DIR "resources")
+
 file(GLOB_RECURSE SOURCE_FILES
 	"${SOURCE_DIR}/*.cpp")
 file(GLOB_RECURSE HEADER_FILES
@@ -33,7 +38,7 @@ file(GLOB_RECURSE HEADER_FILES
 file(GLOB_RECURSE RESOURCE_FILES
 	"${RESOURCE_DIR}/*")
 
-## Show resources in IDE
+## Workaround to show resources in IDE
 add_custom_target(Resources ALL SOURCES ${RESOURCE_FILES})
 
 ## Create source groups (for Visual Studio)
@@ -45,24 +50,17 @@ source_group("Resources" FILES ${RESOURCE_FILES})
 add_executable("${EXECUTABLE}" ${SOURCE_FILES} ${HEADER_FILES})
 target_include_directories("${EXECUTABLE}" PUBLIC "${INCLUDE_DIR}/")
 
-## Add include directories of libraries
+## Link with libraries
+target_link_libraries("${EXECUTABLE}" glm glfw gtl SOIL utl)
 target_include_directories("${EXECUTABLE}" PRIVATE ${OpenGL_INCLUDE_DIRS})
 target_include_directories("${EXECUTABLE}" PRIVATE ${GLEW_INCLUDE_DIRS})
-target_include_directories("${EXECUTABLE}" PRIVATE ${GLFW_INCLUDE_DIRS})
-
-## Link with libraries
 target_link_libraries("${EXECUTABLE}" ${OPENGL_LIBRARIES})
 target_link_libraries("${EXECUTABLE}" ${GLEW_LIBRARIES})
-target_link_libraries("${EXECUTABLE}" ${GLFW_LIBRARIES})
-
-## Link with submodules
-target_link_libraries("${EXECUTABLE}" "gtl")
-target_link_libraries("${EXECUTABLE}" "SOIL")
-target_link_libraries("${EXECUTABLE}" "utl")
 
 ## Use C++11
 set_target_properties("${EXECUTABLE}" PROPERTIES LINKER_LANGUAGE CXX)
 set_target_properties("${EXECUTABLE}" PROPERTIES CXX_STANDARD 11)
+set_target_properties("${EXECUTABLE}" PROPERTIES CXX_STANDARD_REQUIRED ON)
 
 ## Create header with build information
 configure_file(
